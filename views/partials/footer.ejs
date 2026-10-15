@@ -1,0 +1,20 @@
+<% if (typeof user !== 'undefined' && user) { %>
+      </main>
+    </div>
+  </div>
+<% } %>
+<%
+  const t = typeof toasts !== 'undefined' ? toasts : { success: [], error: [] };
+  const all = [].concat((t.success || []).map(m => ['success', m]), (t.error || []).map(m => ['error', m]));
+%>
+<div class="toast-stack" role="status" aria-live="polite">
+  <% all.forEach(([kind, msg]) => { %>
+    <div class="toast toast-<%= kind %>">
+      <span><%= msg %></span>
+      <button type="button" class="toast-close" aria-label="Dismiss">&times;</button>
+    </div>
+  <% }) %>
+</div>
+<script src="/js/app.js" defer></script>
+</body>
+</html>

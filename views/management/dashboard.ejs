@@ -1,0 +1,55 @@
+<%- include('../partials/header', { title: 'Management Dashboard', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Purchase Orders Pending Approval</h1>
+        <div class="subtle">Raised by Purchasing</div>
+      </div>
+    </div>
+
+    <% if (pending.length === 0) { %>
+      <div class="empty-state">Nothing waiting on your approval right now.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>PO #</th><th>JO #</th><th>Item</th><th>Total</th><th>Priority</th><th></th></tr></thead>
+        <tbody>
+          <% pending.forEach(po => { %>
+            <tr>
+              <td class="jo-number"><%= po.po_number %></td>
+              <td class="jo-number"><%= po.jo_number %></td>
+              <td><%= po.item_name %> (<%= po.quantity %> <%= po.unit %>)</td>
+              <td><%= parseFloat(po.total_amount).toFixed(2) %></td>
+              <td class="priority-<%= po.priority %>"><%= po.priority %></td>
+              <td><a href="/management/purchase-orders/<%= po.id %>" class="btn">Review</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:14px">Recent Decisions</h2>
+    <% if (decided.length === 0) { %>
+      <div class="empty-state">No decisions made yet.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>PO #</th><th>Item</th><th>Decision</th><th>When</th></tr></thead>
+        <tbody>
+          <% decided.forEach(d => { %>
+            <tr onclick="location.href='/management/purchase-orders/<%= d.id %>'" style="cursor:pointer">
+              <td class="jo-number"><%= d.po_number %></td>
+              <td><%= d.item_name %></td>
+              <td><span class="pill <%= d.decision === 'approved' ? 'completed' : 'cancelled' %>"><%= d.decision %></span></td>
+              <td class="subtle"><%= new Date(d.decided_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

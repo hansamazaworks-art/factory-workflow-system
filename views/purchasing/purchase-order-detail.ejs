@@ -1,0 +1,53 @@
+<%- include('../partials/header', { title: po.po_number, user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1 class="jo-number"><%= po.po_number %></h1>
+        <div class="subtle"><%= po.item_name %> &middot; <%= po.quantity %> <%= po.unit %></div>
+      </div>
+      <span class="pill <%= po.status === 'approved' || po.status === 'ordered' || po.status === 'received' ? 'completed' : (po.status === 'rejected' ? 'cancelled' : 'pending') %>">
+        <%= po.status.replace('_',' ') %>
+      </span>
+    </div>
+
+    <label>Supplier</label>
+    <p style="margin:0 0 12px"><%= po.supplier %></p>
+
+    <label>Unit Price</label>
+    <p style="margin:0 0 12px"><%= parseFloat(po.unit_price).toFixed(2) %></p>
+
+    <label>Total Amount</label>
+    <p style="margin:0 0 12px"><strong><%= parseFloat(po.total_amount).toFixed(2) %></strong></p>
+
+    <div class="subtle">Created by <%= po.created_by_name %> on <%= new Date(po.created_at).toLocaleString() %></div>
+  </div>
+
+  <% if (po.status === 'approved') { %>
+    <div class="panel">
+      <h2 style="margin-bottom:10px">Approved - ready to place with supplier</h2>
+      <p class="subtle" style="margin-bottom:14px">Once you've actually placed the order with <%= po.supplier %>, mark it as ordered so Toolroom knows to expect delivery.</p>
+      <form method="POST" action="/purchasing/purchase-orders/<%= po.id %>/mark-ordered">
+        <button type="submit" class="btn">Mark as Ordered</button>
+      </form>
+    </div>
+  <% } %>
+
+  <% if (approval) { %>
+    <div class="panel">
+      <h2 style="margin-bottom:6px">Management Decision</h2>
+      <p style="margin:0 0 6px">
+        <span class="pill <%= approval.decision === 'approved' ? 'completed' : 'cancelled' %>"><%= approval.decision %></span>
+      </p>
+      <% if (approval.remarks) { %><p style="margin:8px 0"><%= approval.remarks %></p><% } %>
+      <div class="subtle">By <%= approval.decided_by_name %> on <%= new Date(approval.decided_at).toLocaleString() %></div>
+    </div>
+  <% } else { %>
+    <div class="panel empty-state">Waiting on Management's decision.</div>
+  <% } %>
+
+  <a href="/purchasing/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

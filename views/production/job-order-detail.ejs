@@ -1,0 +1,47 @@
+<%- include('../partials/header', { title: jobOrder.jo_number, user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1 class="jo-number"><%= jobOrder.jo_number %></h1>
+    <div class="subtle"><%= jobOrder.machine_name %><%= jobOrder.location ? ' · ' + jobOrder.location : '' %></div>
+  </div>
+  <span class="pill <%= jobOrder.status %>"><%= statusLabels[jobOrder.status] %></span>
+</div>
+
+<div class="card">
+  <label>Priority</label>
+  <p class="priority-<%= jobOrder.priority %>" style="margin:0 0 12px;text-transform:capitalize"><%= jobOrder.priority %></p>
+
+  <label>Problem Description</label>
+  <p style="margin:0 0 12px;white-space:pre-wrap"><%= jobOrder.problem_desc %></p>
+
+  <div class="subtle">Raised by <%= jobOrder.requested_by_name %> on <%= new Date(jobOrder.created_at).toLocaleString() %></div>
+</div>
+
+<% if (jobOrder.status === 'pending') { %>
+  <div class="card">
+    <h2 style="margin-bottom:10px">Change of mind?</h2>
+    <p class="subtle" style="margin-bottom:14px">You can only cancel a job order before maintenance accepts it.</p>
+    <form method="POST" action="/production/job-orders/<%= jobOrder.id %>/cancel"
+          onsubmit="return confirm('Cancel this job order?')">
+      <button type="submit" class="btn btn-ghost">Cancel Job Order</button>
+    </form>
+  </div>
+<% } %>
+
+<div class="card">
+  <h2 style="margin-bottom:14px">Status History</h2>
+  <ul class="timeline">
+    <% history.forEach(h => { %>
+      <li>
+        <strong><%= statusLabels[h.status] || h.status %></strong>
+        <% if (h.remarks) { %> &mdash; <%= h.remarks %><% } %>
+        <div class="t-meta"><%= h.changed_by_name %> &middot; <%= new Date(h.created_at).toLocaleString() %></div>
+      </li>
+    <% }) %>
+  </ul>
+</div>
+
+<a href="/production/job-orders" class="btn btn-ghost">&larr; Back to job orders</a>
+
+<%- include('../partials/footer', { user }) %>

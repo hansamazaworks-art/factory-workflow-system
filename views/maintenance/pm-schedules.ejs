@@ -1,0 +1,76 @@
+<%- include('../partials/header', { title: 'PM Schedule', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Preventive Maintenance Schedule</h1>
+    <div class="subtle">Recurring tasks per machine &middot; overdue and due-soon surface first</div>
+  </div>
+</div>
+
+<% if (can('pm.manage')) { %>
+<div class="card">
+  <div class="panel-head"><h2>New PM Schedule</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <% if (machines.length === 0) { %>
+    <div class="empty-state">No machines set up yet — add one under Production &rarr; Machines first.</div>
+  <% } else { %>
+    <form method="POST" action="/maintenance/pm" class="field-grid" style="align-items:end">
+      <div>
+        <label for="machine_id">Machine</label>
+        <select id="machine_id" name="machine_id" required>
+          <% machines.forEach(m => { %>
+            <option value="<%= m.id %>" <%= String(form.machine_id) === String(m.id) ? 'selected' : '' %>><%= m.code %> — <%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="task_name">Task</label>
+        <input type="text" id="task_name" name="task_name" value="<%= form.task_name || '' %>" placeholder="e.g. Lubricate hydraulics" required>
+      </div>
+      <div>
+        <label for="frequency_days">Every (days)</label>
+        <input type="number" id="frequency_days" name="frequency_days" value="<%= form.frequency_days || '' %>" min="1" max="3650" placeholder="e.g. 30" required>
+      </div>
+      <div>
+        <label for="start_date">First Due</label>
+        <input type="date" id="start_date" name="start_date" value="<%= form.start_date || today %>">
+      </div>
+      <div style="grid-column:1/-1">
+        <label for="description">Notes (optional)</label>
+        <input type="text" id="description" name="description" value="<%= form.description || '' %>" placeholder="What the task involves, parts needed, etc.">
+      </div>
+      <div>
+        <button type="submit" class="btn">+ Add Schedule</button>
+      </div>
+    </form>
+  <% } %>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="panel-head"><h2>All Schedules</h2></div>
+  <% if (schedules.length === 0) { %>
+    <div class="empty-state">No PM schedules yet. Add one above to start tracking preventive maintenance.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Machine</th><th>Task</th><th>Every</th><th>Next Due</th><th>Last Done</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% schedules.forEach(s => { %>
+            <tr>
+              <td><%= s.machine_name %> <span class="subtle">(<%= s.machine_code %>)</span></td>
+              <td><%= s.task_name %></td>
+              <td class="mono"><%= s.frequency_days %>d</td>
+              <td class="mono"><%= s.next_due_date %></td>
+              <td class="mono subtle"><%= s.last_done_date ? String(s.last_done_date).slice(0,10) : '—' %></td>
+              <td><span class="pill <%= s.pmStatus %>"><%= s.pmStatus.replace('_',' ') %></span></td>
+              <td><a href="/maintenance/pm/<%= s.id %>" class="btn btn-sm btn-ghost">Open</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

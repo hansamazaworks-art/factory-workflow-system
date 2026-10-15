@@ -1,0 +1,49 @@
+<%- include('../partials/header', { title: 'Create Purchase Order', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1><%= requisition.item_name %></h1>
+        <div class="subtle">For <span class="jo-number"><%= requisition.jo_number %></span> &middot; <%= requisition.machine_name %></div>
+      </div>
+      <span class="pill <%= requisition.status === 'pending' ? 'pending' : '' %>"><%= requisition.status.replace('_',' ') %></span>
+    </div>
+
+    <label>Quantity Needed</label>
+    <p style="margin:0"><%= requisition.quantity %> <%= requisition.unit %></p>
+  </div>
+
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <% if (requisition.status === 'pending') { %>
+    <div class="panel">
+      <h2 style="margin-bottom:14px">Create Purchase Order</h2>
+      <form method="POST" action="/purchasing/requisitions/<%= requisition.id %>/create-po">
+        <label for="supplier">Supplier</label>
+        <input type="text" id="supplier" name="supplier" placeholder="e.g. ABC Industrial Supply"
+               value="<%= form.supplier || '' %>">
+
+        <label for="unit_price">Unit Price</label>
+        <input type="text" id="unit_price" name="unit_price" placeholder="e.g. 150.00"
+               value="<%= form.unit_price || '' %>">
+
+        <p class="subtle" style="margin-top:10px">
+          Total = unit price &times; <%= requisition.quantity %> <%= requisition.unit %>
+        </p>
+
+        <button type="submit" class="btn">Create Purchase Order</button>
+      </form>
+    </div>
+  <% } else { %>
+    <div class="panel empty-state">
+      A purchase order has already been created for this requisition.
+    </div>
+  <% } %>
+
+  <a href="/purchasing/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

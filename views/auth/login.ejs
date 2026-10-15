@@ -1,0 +1,28 @@
+<%- include('../partials/header', { title: 'Log in - Factory System' }) %>
+
+<div class="login-shell">
+  <div class="login-box">
+    <div class="login-mark">FW</div>
+    <h1>Factory Workflow System</h1>
+    <p class="subtle">Production &middot; Maintenance &middot; Toolroom &middot; Purchasing &middot; Management</p>
+
+    <% if (typeof notice !== 'undefined' && notice) { %>
+      <div class="notice-box mb16" role="status"><%= notice %></div>
+    <% } %>
+    <% if (error) { %>
+      <div class="error-box" role="alert"><%= error %></div>
+    <% } %>
+
+    <form method="POST" action="/login">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" value="<%= typeof username !== 'undefined' ? username : '' %>" autocomplete="username" autofocus required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+      <button type="submit" class="btn">Log in</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

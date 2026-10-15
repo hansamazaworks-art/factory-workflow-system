@@ -1,0 +1,70 @@
+<%- include('../partials/header', { title: 'Inventory', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Inventory</h1>
+        <div class="subtle">Stock on hand for tools and materials</div>
+      </div>
+      <a href="/toolroom/dashboard" class="btn btn-ghost">&larr; Back to requests</a>
+    </div>
+
+    <% if (error) { %>
+      <div class="error-box"><%= error %></div>
+    <% } %>
+
+    <% if (items.length === 0) { %>
+      <div class="empty-state">No items yet. Add your first item below.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Item</th><th>SKU</th><th>On Hand</th><th>Reorder Level</th><th>Restock</th></tr></thead>
+        <tbody>
+          <% items.forEach(i => { %>
+            <tr>
+              <td><%= i.item_name %></td>
+              <td class="subtle"><%= i.sku || '—' %></td>
+              <td>
+                <%= i.quantity_on_hand %> <%= i.unit %>
+                <% if (parseFloat(i.quantity_on_hand) <= parseFloat(i.reorder_level)) { %>
+                  <span class="pill pending" style="margin-left:6px">Low</span>
+                <% } %>
+              </td>
+              <td class="subtle"><%= i.reorder_level %></td>
+              <td>
+                <form method="POST" action="/toolroom/inventory/<%= i.id %>/restock" style="display:flex;gap:6px">
+                  <input type="text" name="amount" placeholder="+ qty" style="width:80px">
+                  <button type="submit" class="btn btn-ghost">Add</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:14px">Add New Item</h2>
+    <form method="POST" action="/toolroom/inventory">
+      <label for="item_name">Item Name</label>
+      <input type="text" id="item_name" name="item_name" placeholder="e.g. Hydraulic hose fitting 1/2in">
+
+      <label for="sku">SKU (optional)</label>
+      <input type="text" id="sku" name="sku" placeholder="e.g. HF-1205">
+
+      <label for="quantity_on_hand">Starting Quantity</label>
+      <input type="text" id="quantity_on_hand" name="quantity_on_hand" placeholder="e.g. 20">
+
+      <label for="unit">Unit</label>
+      <input type="text" id="unit" name="unit" placeholder="e.g. pcs, meters, liters">
+
+      <label for="reorder_level">Reorder Level (get warned when stock drops to this)</label>
+      <input type="text" id="reorder_level" name="reorder_level" placeholder="e.g. 5">
+
+      <button type="submit" class="btn">Add Item</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

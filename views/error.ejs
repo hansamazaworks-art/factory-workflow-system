@@ -1,0 +1,15 @@
+<%- include('partials/header', { title: 'Error', user }) %>
+
+<div class="content-header">
+  <div><h1><%= typeof heading !== 'undefined' ? heading : 'Something needs attention' %></h1></div>
+</div>
+<div class="card empty-state" role="alert">
+  <p style="font-size:15px;color:var(--text);margin:0 0 14px"><%= message %></p>
+  <% if (user) { %>
+    <a class="btn" href="<%= homeUrl %>">Back to your dashboard</a>
+  <% } else { %>
+    <a class="btn" href="/login">Go to login</a>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

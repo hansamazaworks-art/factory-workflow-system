@@ -1,0 +1,42 @@
+<%- include('../partials/header', { title: 'Job Orders', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Job Orders</h1>
+    <div class="subtle">Requests you've raised for the maintenance team</div>
+  </div>
+  <a href="/production/job-orders/new" class="btn">+ New Job Order</a>
+</div>
+
+<div class="card">
+  <% if (jobOrders.length === 0) { %>
+    <div class="empty-state">No job orders yet. Create one when a machine needs attention.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>JO #</th>
+            <th>Machine / Equipment</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Raised</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% jobOrders.forEach(jo => { %>
+            <tr onclick="location.href='/production/job-orders/<%= jo.id %>'" style="cursor:pointer">
+              <td class="jo-number"><%= jo.jo_number %></td>
+              <td><%= jo.machine_name %></td>
+              <td class="priority-<%= jo.priority %>"><%= jo.priority %></td>
+              <td><span class="pill <%= jo.status %>"><%= statusLabels[jo.status] %></span></td>
+              <td class="subtle"><%= new Date(jo.created_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

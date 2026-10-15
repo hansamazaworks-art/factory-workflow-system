@@ -1,0 +1,100 @@
+<%- include('../partials/header', { title: 'Mold Changes', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Mold Changes</h1>
+    <div class="subtle">Assign a mold to a machine — this closes out whatever was mounted before</div>
+  </div>
+</div>
+
+<div class="notice-box">
+  Swapping a mold while starting a run on the <a href="/production/floor">Live Floor</a> board records the
+  change automatically — use this page for a standalone tooling swap outside of a live run.
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Record a Mold Change</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <form method="POST" action="/production/mold-changes">
+    <div class="field-grid">
+      <div>
+        <label for="machine_id">Machine</label>
+        <select id="machine_id" name="machine_id" required>
+          <option value="">Select machine…</option>
+          <% machines.forEach(m => { %>
+            <option value="<%= m.id %>"><%= m.name %><%= m.assignment ? ' — currently: ' + m.assignment.mold_name : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="mold_id">New Mold</label>
+        <select id="mold_id" name="mold_id" required>
+          <option value="">Select mold…</option>
+          <% molds.forEach(m => { %>
+            <option value="<%= m.id %>"><%= m.name %> (<%= m.product %>, <%= m.cavities %> cav.)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="cavities_override">Cavities (override, optional)</label>
+        <input type="number" min="1" id="cavities_override" name="cavities_override" placeholder="Uses mold default if blank">
+      </div>
+      <div>
+        <label for="standard_cycle_override">Standard cycle sec (override, optional)</label>
+        <input type="number" min="0" step="0.1" id="standard_cycle_override" name="standard_cycle_override" placeholder="Uses mold default if blank">
+      </div>
+    </div>
+    <label for="remarks">Remarks</label>
+    <input type="text" id="remarks" name="remarks" placeholder="Optional">
+    <div class="form-actions">
+      <button type="submit" class="btn">Assign Mold</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Currently Mounted</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Machine</th><th>Mold</th><th>Product</th><th>Cavities</th><th>Since</th></tr></thead>
+      <tbody>
+        <% machines.forEach(m => { %>
+          <tr>
+            <td><%= m.name %></td>
+            <td><%= m.assignment ? m.assignment.mold_name : '—' %></td>
+            <td class="subtle"><%= m.assignment ? m.assignment.product : '—' %></td>
+            <td class="mono"><%= m.assignment ? m.assignment.cavities_snapshot : '—' %></td>
+            <td class="subtle"><%= m.assignment ? new Date(m.assignment.assigned_at).toLocaleString() : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>History</h2></div>
+  <% if (history.length === 0) { %>
+    <div class="empty-state">No mold changes recorded yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Machine</th><th>Mold</th><th>Cavities</th><th>Assigned</th><th>Unassigned</th><th>By</th></tr></thead>
+        <tbody>
+          <% history.forEach(h => { %>
+            <tr>
+              <td><%= h.machine_name %></td>
+              <td><%= h.mold_name %></td>
+              <td class="mono"><%= h.cavities_snapshot %></td>
+              <td class="subtle"><%= new Date(h.assigned_at).toLocaleString() %></td>
+              <td class="subtle"><%= h.unassigned_at ? new Date(h.unassigned_at).toLocaleString() : '— (active)' %></td>
+              <td class="subtle"><%= h.assigned_by_name %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

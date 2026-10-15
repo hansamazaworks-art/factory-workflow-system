@@ -1,0 +1,42 @@
+<%- include('../partials/header', { title: po.po_number, user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1 class="jo-number"><%= po.po_number %></h1>
+        <div class="subtle">For <span class="jo-number"><%= po.jo_number %></span> &middot; <%= po.machine_name %></div>
+      </div>
+      <span class="pill <%= po.status === 'received' ? 'completed' : 'pending' %>"><%= po.status.replace('_',' ') %></span>
+    </div>
+
+    <label>Item</label>
+    <p style="margin:0 0 12px"><%= po.item_name %> &middot; <%= po.quantity %> <%= po.unit %></p>
+
+    <label>Supplier</label>
+    <p style="margin:0"><%= po.supplier %></p>
+  </div>
+
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <% if (po.status === 'ordered') { %>
+    <div class="panel">
+      <h2 style="margin-bottom:10px">Delivery arrived?</h2>
+      <p class="subtle" style="margin-bottom:14px">
+        This adds <%= po.quantity %> <%= po.unit %> of <%= po.item_name %> to inventory and puts the
+        original request back in your queue so you can issue it to Maintenance.
+      </p>
+      <form method="POST" action="/toolroom/purchase-orders/<%= po.id %>/receive">
+        <button type="submit" class="btn">Mark Received</button>
+      </form>
+    </div>
+  <% } else if (po.status === 'received') { %>
+    <div class="panel empty-state">This purchase order has already been received and stocked.</div>
+  <% } %>
+
+  <a href="/toolroom/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

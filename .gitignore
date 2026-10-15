@@ -1,0 +1,5 @@
+node_modules/
+.env
+backups/*.sql
+uploads/
+CLAUDE.local.md

@@ -1,0 +1,64 @@
+<%- include('../partials/header', { title: 'Molds', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Molds</h1>
+    <div class="subtle">Tooling catalog with cavity counts and standard cycle times</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Add Mold</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <form method="POST" action="/production/molds" class="field-grid" style="align-items:end">
+    <div>
+      <label for="code">Code</label>
+      <input type="text" id="code" name="code" placeholder="e.g. MLD-300" required>
+    </div>
+    <div>
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" placeholder="e.g. Mold 300" required>
+    </div>
+    <div>
+      <label for="product">Product</label>
+      <input type="text" id="product" name="product" placeholder="e.g. Bottle Cap 30mm">
+    </div>
+    <div>
+      <label for="cavities">Cavities</label>
+      <input type="number" min="1" id="cavities" name="cavities" placeholder="e.g. 8" required>
+    </div>
+    <div>
+      <label for="standard_cycle_sec">Standard cycle (sec)</label>
+      <input type="number" min="0" step="0.1" id="standard_cycle_sec" name="standard_cycle_sec" placeholder="e.g. 12.5">
+    </div>
+    <div>
+      <button type="submit" class="btn">+ Add Mold</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>All Molds</h2></div>
+  <% if (molds.length === 0) { %>
+    <div class="empty-state">No molds yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Name</th><th>Product</th><th>Cavities</th><th>Standard Cycle</th></tr></thead>
+        <tbody>
+          <% molds.forEach(m => { %>
+            <tr>
+              <td class="jo-number"><%= m.code %></td>
+              <td><%= m.name %></td>
+              <td class="subtle"><%= m.product || '—' %></td>
+              <td class="mono"><%= m.cavities %></td>
+              <td class="mono"><%= m.standard_cycle_sec ? Number(m.standard_cycle_sec).toFixed(1) + 's' : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

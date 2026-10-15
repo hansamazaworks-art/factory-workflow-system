@@ -1,0 +1,74 @@
+<%- include('../partials/header', { title: 'Reports', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Reports</h1>
+    <div class="subtle">Machine performance for a date range</div>
+  </div>
+</div>
+
+<div class="card">
+  <form method="GET" action="/production/reports" class="field-grid" style="max-width:480px;align-items:end">
+    <div>
+      <label for="from">From</label>
+      <input type="date" id="from" name="from" value="<%= from %>">
+    </div>
+    <div>
+      <label for="to">To</label>
+      <input type="date" id="to" name="to" value="<%= to %>">
+    </div>
+    <div>
+      <button type="submit" class="btn">Update</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>By Machine</h2></div>
+  <% if (summary.length === 0) { %>
+    <div class="empty-state">No machines set up yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Machine</th><th>Runs</th><th>Gross</th><th>Good</th><th>Reject%</th><th>Achievement</th><th>Downtime</th></tr></thead>
+        <tbody>
+          <% summary.forEach(s => { %>
+            <tr>
+              <td><%= s.machine_name %> <span class="subtle">(<%= s.machine_code %>)</span></td>
+              <td class="mono"><%= s.runs %></td>
+              <td class="mono"><%= Number(s.gross).toLocaleString() %></td>
+              <td class="mono"><%= Number(s.good).toLocaleString() %></td>
+              <td class="mono <%= s.rejectRatePct > 3 ? 'priority-high' : '' %>"><%= s.rejectRatePct.toFixed(1) %>%</td>
+              <td class="mono <%= s.achievementPct !== null && s.achievementPct < 90 ? 'priority-high' : '' %>"><%= s.achievementPct === null ? '—' : s.achievementPct.toFixed(0) + '%' %></td>
+              <td class="mono"><%= Number(s.downtimeMin).toFixed(0) %> min</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Downtime by Reason</h2></div>
+  <% if (downtimeByReason.length === 0) { %>
+    <div class="empty-state">No downtime logged in this range.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Reason</th><th>Occurrences</th><th>Total Minutes</th></tr></thead>
+        <tbody>
+          <% downtimeByReason.forEach(r => { %>
+            <tr>
+              <td><%= r.reason %></td>
+              <td class="mono"><%= r.occurrences %></td>
+              <td class="mono"><%= Number(r.totalMin).toFixed(0) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

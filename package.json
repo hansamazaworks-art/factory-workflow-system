@@ -1,0 +1,27 @@
+{
+  "name": "factory-system",
+  "version": "1.0.0",
+  "description": "LAN-based factory workflow system: Production -> Maintenance -> Toolroom -> Purchasing -> Management",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node db/seed.js",
+    "backup": "node scripts/backup.js",
+    "test": "node test/run.js",
+    "migrate": "node scripts/migrate.js",
+    "user": "node scripts/user.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-flash": "^0.1.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mysql2": "^3.10.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.1"
+  }
+}

@@ -1,0 +1,98 @@
+<%- include('../partials/header', { title: 'Maintenance KPI Dashboard', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>KPI Dashboard</h1>
+    <div class="subtle">Department-wide &middot; job order metrics last 30 days, PM compliance ongoing</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card <%= totalOpen > 0 ? 'accent-blue' : '' %>">
+    <div class="kpi-label">Open Jobs</div>
+    <div class="kpi-value"><%= totalOpen %></div>
+    <div class="kpi-sub"><%= openCounts.urgent %> urgent &middot; <%= openCounts.high %> high</div>
+  </div>
+  <div class="kpi-card <%= overdueJobs.length > 0 ? 'accent-red' : 'accent-green' %>">
+    <div class="kpi-label">Overdue Jobs</div>
+    <div class="kpi-value"><%= overdueJobs.length %></div>
+    <div class="kpi-sub" title="An open job is overdue once it has waited longer than the target for its priority.">
+      open longer than <%= overdueHours.urgent %>h / <%= overdueHours.high %>h / <%= overdueHours.normal %>h / <%= overdueHours.low %>h
+      (urgent / high / normal / low)<% if (can('settings.view')) { %> &middot; <a href="/maintenance/settings">targets</a><% } %>
+    </div>
+  </div>
+  <div class="kpi-card accent-blue">
+    <div class="kpi-label">Avg. Response Time</div>
+    <div class="kpi-value"><%= avgResponseMin === null ? '—' : (avgResponseMin / 60).toFixed(1) + 'h' %></div>
+    <div class="kpi-sub">created &rarr; accepted, 30d</div>
+  </div>
+  <div class="kpi-card accent-blue">
+    <div class="kpi-label">Avg. Resolution (MTTR)</div>
+    <div class="kpi-value"><%= avgResolutionMin === null ? '—' : (avgResolutionMin / 60).toFixed(1) + 'h' %></div>
+    <div class="kpi-sub">accepted &rarr; completed, 30d</div>
+  </div>
+  <div class="kpi-card accent-green">
+    <div class="kpi-label">Completed (30d)</div>
+    <div class="kpi-value"><%= completedCount30d %></div>
+    <div class="kpi-sub"><%= totalCreated30d %> job orders created in period</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card <%= pmCompliancePct === null ? '' : (pmCompliancePct < 80 ? 'accent-red' : 'accent-green') %>">
+    <div class="kpi-label">PM Compliance</div>
+    <div class="kpi-value"><%= pmCompliancePct === null ? '—' : pmCompliancePct.toFixed(0) + '%' %></div>
+    <div class="kpi-sub"><%= pmCompletionsTotal %> PM tasks actioned, last 30d</div>
+  </div>
+  <div class="kpi-card <%= pmCounts.overdue > 0 ? 'accent-red' : 'accent-green' %>">
+    <div class="kpi-label">PM Overdue</div>
+    <div class="kpi-value"><%= pmCounts.overdue %></div>
+    <div class="kpi-sub"><%= pmCounts.activeSchedules %> active schedules total</div>
+  </div>
+  <div class="kpi-card <%= pmCounts.dueSoon > 0 ? 'accent-amber' : '' %>">
+    <div class="kpi-label">PM Due This Week</div>
+    <div class="kpi-value"><%= pmCounts.dueSoon %></div>
+    <div class="kpi-sub"><a href="/maintenance/pm">Open PM Schedule &rarr;</a></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Jobs Completed per Day (7 days)</h2></div>
+  <div class="bar-chart">
+    <% days.forEach(d => { %>
+      <div class="bar-col">
+        <div class="bar-value"><%= d.count %></div>
+        <div class="bar" style="height:<%= Math.round((d.count / maxDaily) * 100) %>%"></div>
+        <div class="bar-label"><%= d.label %></div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Overdue Job Orders</h2></div>
+  <% if (overdueJobs.length === 0) { %>
+    <div class="empty-state">Nothing overdue right now.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>JO #</th><th>Machine</th><th>Priority</th><th>Raised By</th><th>Status</th><th>Hours Open</th><th></th></tr></thead>
+        <tbody>
+          <% overdueJobs.forEach(jo => { %>
+            <tr>
+              <td class="jo-number"><%= jo.jo_number %></td>
+              <td><%= jo.machine_name %></td>
+              <td class="priority-<%= jo.priority %>"><%= jo.priority %></td>
+              <td><%= jo.requested_by_name %></td>
+              <td><span class="pill <%= jo.status %>"><%= statusLabels[jo.status] || jo.status %></span></td>
+              <td class="mono priority-high"><%= jo.hoursOpen %>h</td>
+              <td><a href="/maintenance/job-orders/<%= jo.id %>" class="btn btn-sm btn-ghost">Open</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

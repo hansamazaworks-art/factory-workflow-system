@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + (title.indexOf('Factory') === -1 ? ' · Factory System' : '') : 'Factory System' %></title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Before first paint: mark that scripts run, and restore the collapsed
+    // sidebar if this person collapsed it last time (no flash of layout).
+    document.documentElement.classList.add('js');
+    try { if (localStorage.getItem('fws.sidebar') === 'collapsed') document.documentElement.classList.add('sidebar-collapsed'); } catch (e) {}
+  </script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<% if (typeof user !== 'undefined' && user) {
+  const pageTitle = typeof title !== 'undefined' ? title : '';
+  const path = typeof currentPath !== 'undefined' ? currentPath : '';
+  // One menu for everyone, filtered by what each person may open
+  // (capabilities in src/constants/permissions.js).
+  const NAV = [
+    { dept: 'Production', cap: 'production.access', groups: [
+      { group: 'Overview', links: [
+        { href: '/production/dashboard', ico: '&#9679;', label: 'Dashboard' }
+      ]},
+      { group: 'Floor Control', links: [
+        { href: '/production/floor', ico: '&#9881;', label: 'Live Floor' },
+        { href: '/production/machines', ico: '&#9632;', label: 'Machines' },
+        { href: '/production/molds', ico: '&#9635;', label: 'Molds' },
+        { href: '/production/operators', ico: '&#9786;', label: 'Operators' },
+        { href: '/production/mold-changes', ico: '&#8635;', label: 'Mold Changes' },
+        { href: '/production/downtime', ico: '&#9888;', label: 'Downtime' },
+        { href: '/production/reports', ico: '&#9776;', label: 'Reports' },
+        { href: '/production/analytics', ico: '&#9707;', label: 'Analytics' }
+      ]},
+      { group: 'Maintenance Requests', links: [
+        { href: '/production/job-orders', ico: '&#9998;', label: 'Job Orders' }
+      ]}
+    ]},
+    { dept: 'Maintenance', cap: 'maintenance.view', groups: [
+      { group: 'Overview', links: [
+        { href: '/maintenance/dashboard', ico: '&#9679;', label: 'Dashboard' },
+        { href: '/maintenance/kpi', ico: '&#9707;', label: 'KPI Dashboard', cap: 'maintenance.kpi.view' }
+      ]},
+      { group: 'Preventive Maintenance', links: [
+        { href: '/maintenance/pm', ico: '&#9881;', label: 'PM Schedule', cap: 'pm.view' }
+      ]},
+      { group: 'Administration', links: [
+        { href: '/maintenance/settings', ico: '&#9881;', label: 'Maintenance Settings', cap: 'settings.view' }
+      ]}
+    ]},
+    { dept: 'Toolroom', cap: 'toolroom.access', groups: [
+      { group: 'Overview', links: [
+        { href: '/toolroom/dashboard', ico: '&#9679;', label: 'Dashboard' },
+        { href: '/toolroom/inventory', ico: '&#9636;', label: 'Inventory' }
+      ]}
+    ]},
+    { dept: 'Purchasing', cap: 'purchasing.access', groups: [
+      { group: 'Overview', links: [
+        { href: '/purchasing/dashboard', ico: '&#9679;', label: 'Dashboard' }
+      ]}
+    ]},
+    { dept: 'Management', cap: 'management.access', groups: [
+      { group: 'Overview', links: [
+        { href: '/management/dashboard', ico: '&#9679;', label: 'Dashboard' }
+      ]}
+    ]}
+  ];
+  // Keep only what this user may open; their home department first.
+  const visible = NAV.filter(d => can(d.cap)).map(d => ({
+    ...d,
+    groups: d.groups.map(g => ({ ...g, links: g.links.filter(l => !l.cap || can(l.cap)) })).filter(g => g.links.length)
+  }));
+  const homeSeg = homeUrl.split('/')[1];
+  visible.sort((a, b) => (b.groups[0].links[0].href.split('/')[1] === homeSeg) - (a.groups[0].links[0].href.split('/')[1] === homeSeg));
+  const multiDept = visible.length > 1;
+
+  // Current page = the link whose address is the longest match for this URL.
+  let current = null;
+  visible.forEach(d => d.groups.forEach(g => g.links.forEach(l => {
+    if ((path === l.href || path.startsWith(l.href + '/')) && (!current || l.href.length > current.link.href.length)) {
+      current = { dept: d, group: g, link: l };
+    }
+  })));
+  const pageDept = current ? current.dept : visible.find(d => path.startsWith('/' + d.groups[0].links[0].href.split('/')[1] + '/'));
+
+  // Breadcrumbs: Department > Group > Page > Record.
+  const crumbs = [];
+  if (pageDept) crumbs.push({ label: pageDept.dept, href: pageDept.groups[0].links[0].href });
+  if (current) {
+    const isDeptHome = current.link === current.dept.groups[0].links[0];
+    if (!isDeptHome) {
+      if (current.group.group !== 'Overview') crumbs.push({ label: current.group.group });
+      crumbs.push({ label: current.link.label, href: current.link.href });
+    }
+  } else if (path === '/account/change-password') {
+    crumbs.push({ label: 'Account' });
+  }
+  const lastLabel = crumbs.length ? crumbs[crumbs.length - 1].label : '';
+  if (pageTitle && pageTitle !== lastLabel && !(current && current.link.href === path)) {
+    crumbs.push({ label: pageTitle });
+  }
+  const deptLabel = pageDept ? pageDept.dept : (visible[0] ? visible[0].dept : '');
+%>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="icon-btn nav-toggle" aria-controls="sidebar" aria-expanded="false" hidden>
+          <span aria-hidden="true">&#9776;</span><span class="sr-only">Open navigation</span>
+        </button>
+        <button type="button" class="icon-btn collapse-toggle" aria-controls="sidebar" aria-pressed="false" hidden
+                title="Collapse sidebar">
+          <span aria-hidden="true">&#8676;</span><span class="sr-only">Collapse sidebar</span>
+        </button>
+        <a class="brand" href="<%= homeUrl %>">
+          <span class="mark" aria-hidden="true">FW</span>
+          <span class="brand-text">
+            Factory Workflow System
+            <small><%= user.department || deptLabel %></small>
+          </span>
+        </a>
+      </div>
+      <div class="who">
+        <span class="role-tag"><%= roleLabel %></span>
+        <span class="who-name"><%= user.full_name %></span>
+        <a class="who-link" href="/account/change-password">Change Password</a>
+        <form method="POST" action="/logout"><button type="submit">Log out</button></form>
+      </div>
+    </header>
+    <div class="body-row">
+      <nav id="sidebar" class="sidebar" aria-label="Main navigation">
+        <% visible.forEach(d => { %>
+          <div class="nav-dept-block">
+            <% if (multiDept) { %><div class="nav-dept"><%= d.dept %></div><% } %>
+            <% d.groups.forEach(g => { %>
+              <div class="nav-group">
+                <div class="nav-label"><%= g.group %></div>
+                <% g.links.forEach(l => { const on = current && current.link === l; %>
+                  <a class="nav-link <%= on ? 'active' : '' %>" href="<%= l.href %>" title="<%= multiDept ? d.dept + ': ' : '' %><%= l.label %>"
+                     <%- on ? 'aria-current="page"' : '' %>>
+                    <span class="ico" aria-hidden="true"><%- l.ico %></span><span class="nav-text"><%= l.label %></span>
+                  </a>
+                <% }) %>
+              </div>
+            <% }) %>
+          </div>
+        <% }) %>
+        <div class="nav-group nav-account">
+          <div class="nav-label">Account</div>
+          <a class="nav-link <%= path === '/account/change-password' ? 'active' : '' %>" href="/account/change-password" title="Change Password"
+             <%- path === '/account/change-password' ? 'aria-current="page"' : '' %>>
+            <span class="ico" aria-hidden="true">&#9673;</span><span class="nav-text">Change Password</span>
+          </a>
+        </div>
+      </nav>
+      <div class="nav-overlay" hidden></div>
+      <main id="main" class="content" tabindex="-1">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            <% crumbs.forEach((c, i) => { const last = i === crumbs.length - 1; %>
+              <li>
+                <% if (c.href && !last) { %><a href="<%= c.href %>"><%= c.label %></a>
+                <% } else { %><span <%- last ? 'aria-current="page"' : '' %>><%= c.label %></span><% } %>
+              </li>
+            <% }) %>
+          </ol>
+        </nav>
+<% } %>

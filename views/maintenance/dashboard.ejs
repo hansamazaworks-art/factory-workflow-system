@@ -1,0 +1,72 @@
+<%- include('../partials/header', { title: 'Maintenance Dashboard', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Maintenance Dashboard</h1>
+    <div class="subtle">Incoming job orders and the jobs you have accepted</div>
+  </div>
+</div>
+
+  <div class="card">
+    <div class="panel-head">
+      <div>
+        <h2>Incoming Job Orders</h2>
+        <div class="subtle">Waiting to be accepted &middot; sorted by priority</div>
+      </div>
+    </div>
+
+    <% if (incoming.length === 0) { %>
+      <div class="empty-state">Nothing waiting right now.</div>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr><th>JO #</th><th>Machine</th><th>Priority</th><th>Raised By</th><th>Raised</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% incoming.forEach(jo => { %>
+            <tr>
+              <td class="jo-number"><%= jo.jo_number %></td>
+              <td><%= jo.machine_name %></td>
+              <td class="priority-<%= jo.priority %>"><%= jo.priority %></td>
+              <td><%= jo.requested_by_name %></td>
+              <td class="subtle"><%= new Date(jo.created_at).toLocaleString() %></td>
+              <td><a href="/maintenance/job-orders/<%= jo.id %>" class="btn">Review</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="panel-head">
+      <div>
+        <h2>My Active Jobs</h2>
+        <div class="subtle">Job orders you've accepted</div>
+      </div>
+    </div>
+
+    <% if (mine.length === 0) { %>
+      <div class="empty-state">You haven't accepted any jobs yet.</div>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr><th>JO #</th><th>Machine</th><th>Status</th><th>Updated</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% mine.forEach(jo => { %>
+            <tr>
+              <td class="jo-number"><%= jo.jo_number %></td>
+              <td><%= jo.machine_name %></td>
+              <td><span class="pill <%= jo.status %>"><%= statusLabels[jo.status] %></span></td>
+              <td class="subtle"><%= new Date(jo.updated_at).toLocaleString() %></td>
+              <td><a href="/maintenance/job-orders/<%= jo.id %>" class="btn btn-ghost">Open</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+
+<%- include('../partials/footer') %>

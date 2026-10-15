@@ -1,0 +1,55 @@
+<%- include('../partials/header', { title: 'Operators', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Operators</h1>
+    <div class="subtle">Floor personnel available for production entries</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Add Operator</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <form method="POST" action="/production/operators" class="field-grid" style="align-items:end">
+    <div>
+      <label for="employee_code">Employee Code (optional)</label>
+      <input type="text" id="employee_code" name="employee_code" placeholder="e.g. EMP-014">
+    </div>
+    <div>
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" placeholder="e.g. Juan Dela Cruz" required>
+    </div>
+    <div>
+      <button type="submit" class="btn">+ Add Operator</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>All Operators</h2></div>
+  <% if (operators.length === 0) { %>
+    <div class="empty-state">No operators yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% operators.forEach(o => { %>
+            <tr>
+              <td class="subtle mono"><%= o.employee_code || '—' %></td>
+              <td><%= o.name %></td>
+              <td><span class="pill <%= o.is_active ? 'completed' : 'cancelled' %>"><%= o.is_active ? 'active' : 'inactive' %></span></td>
+              <td>
+                <form method="POST" action="/production/operators/<%= o.id %>/toggle">
+                  <button type="submit" class="btn btn-ghost btn-sm"><%= o.is_active ? 'Deactivate' : 'Activate' %></button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

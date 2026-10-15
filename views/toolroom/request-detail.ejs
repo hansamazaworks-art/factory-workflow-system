@@ -1,0 +1,54 @@
+<%- include('../partials/header', { title: 'Check Material Request', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1><%= request.item_name %></h1>
+        <div class="subtle">Requested for <span class="jo-number"><%= request.jo_number %></span> &middot; <%= request.machine_name %></div>
+      </div>
+      <span class="pill <%= request.status === 'issued' ? 'completed' : (request.status === 'not_available' ? 'cancelled' : '') %>">
+        <%= request.status.replace('_',' ') %>
+      </span>
+    </div>
+
+    <label>Quantity Requested</label>
+    <p style="margin:0 0 12px"><%= request.quantity %> <%= request.unit %></p>
+
+    <label>Stock on Hand</label>
+    <% if (inventoryMatch) { %>
+      <p style="margin:0 0 12px">
+        <%= inventoryMatch.quantity_on_hand %> <%= inventoryMatch.unit %>
+        <% if (Number(inventoryMatch.quantity_on_hand) < Number(request.quantity)) { %>
+          <span class="pill cancelled" style="margin-left:8px">Insufficient</span>
+        <% } else { %>
+          <span class="pill completed" style="margin-left:8px">Enough in stock</span>
+        <% } %>
+      </p>
+    <% } else { %>
+      <p style="margin:0 0 12px" class="subtle">This item isn't in the inventory list at all.</p>
+    <% } %>
+  </div>
+
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <% if (request.status === 'pending') { %>
+    <div class="panel">
+      <h2 style="margin-bottom:14px">Decision</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <form method="POST" action="/toolroom/requests/<%= request.id %>/issue">
+          <button type="submit" class="btn">Issue from Stock</button>
+        </form>
+        <form method="POST" action="/toolroom/requests/<%= request.id %>/not-available">
+          <button type="submit" class="btn btn-ghost">No Stock - Raise Purchase Requisition</button>
+        </form>
+      </div>
+    </div>
+  <% } %>
+
+  <a href="/toolroom/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,60 @@
+<%- include('../partials/header', { title: 'Purchasing Dashboard', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Open Requisitions</h1>
+        <div class="subtle">Raised by Toolroom when stock is short</div>
+      </div>
+    </div>
+
+    <% if (open.length === 0) { %>
+      <div class="empty-state">Nothing waiting right now.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>JO #</th><th>Machine</th><th>Item</th><th>Qty</th><th>Priority</th><th></th></tr></thead>
+        <tbody>
+          <% open.forEach(r => { %>
+            <tr>
+              <td class="jo-number"><%= r.jo_number %></td>
+              <td><%= r.machine_name %></td>
+              <td><%= r.item_name %></td>
+              <td><%= r.quantity %> <%= r.unit %></td>
+              <td class="priority-<%= r.priority %>"><%= r.priority %></td>
+              <td><a href="/purchasing/requisitions/<%= r.id %>" class="btn">Create PO</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:14px">Recent Purchase Orders</h2>
+    <% if (recentPOs.length === 0) { %>
+      <div class="empty-state">No purchase orders created yet.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>PO #</th><th>Item</th><th>Supplier</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+          <% recentPOs.forEach(po => { %>
+            <tr onclick="location.href='/purchasing/purchase-orders/<%= po.id %>'" style="cursor:pointer">
+              <td class="jo-number"><%= po.po_number %></td>
+              <td><%= po.item_name %> (<%= po.quantity %> <%= po.unit %>)</td>
+              <td><%= po.supplier %></td>
+              <td><%= parseFloat(po.total_amount).toFixed(2) %></td>
+              <td>
+                <span class="pill <%= po.status === 'approved' || po.status === 'ordered' || po.status === 'received' ? 'completed' : (po.status === 'rejected' ? 'cancelled' : 'pending') %>">
+                  <%= po.status.replace('_',' ') %>
+                </span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

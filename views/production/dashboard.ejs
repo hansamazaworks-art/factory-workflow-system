@@ -1,0 +1,91 @@
+<%- include('../partials/header', { title: 'Production Dashboard', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Production Overview</h1>
+    <div class="subtle">Floor status and job orders at a glance</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card <%= stats.runningCount === stats.machineCount ? 'accent-green' : '' %>">
+    <div class="kpi-label">Machines Running</div>
+    <div class="kpi-value"><%= stats.runningCount %> / <%= stats.machineCount %></div>
+    <div class="kpi-sub"><%= stats.downCount %> down</div>
+  </div>
+  <div class="kpi-card accent-blue">
+    <div class="kpi-label">Today's Output</div>
+    <div class="kpi-value"><%= stats.grossToday.toLocaleString() %></div>
+    <div class="kpi-sub">pcs gross &middot; <%= stats.rejectsToday.toLocaleString() %> rejected</div>
+  </div>
+  <div class="kpi-card <%= stats.achievementPct === null ? '' : (stats.achievementPct < 90 ? 'accent-amber' : 'accent-green') %>">
+    <div class="kpi-label">Today's Achievement</div>
+    <div class="kpi-value"><%= stats.achievementPct === null ? '—' : stats.achievementPct.toFixed(0) + '%' %></div>
+    <div class="kpi-sub">vs. target opens</div>
+  </div>
+  <div class="kpi-card <%= stats.openJobOrders > 0 ? 'accent-amber' : '' %>">
+    <div class="kpi-label">Open Job Orders</div>
+    <div class="kpi-value"><%= stats.openJobOrders %></div>
+    <div class="kpi-sub">raised by you, unresolved</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head">
+    <h2>Machine Status</h2>
+    <div style="display:flex;gap:8px">
+      <a href="/production/floor" class="btn btn-sm">Live Floor Board</a>
+      <a href="/production/machines" class="btn btn-ghost btn-sm">Manage Machines</a>
+    </div>
+  </div>
+  <% if (machines.length === 0) { %>
+    <div class="empty-state">No machines set up yet. <a href="/production/machines">Add one</a>.</div>
+  <% } else { %>
+    <div class="machine-grid">
+      <% machines.forEach(m => { %>
+        <div class="machine-card <%= m.status %>">
+          <div class="m-name"><%= m.name %></div>
+          <div class="m-meta"><%= m.code %><%= m.location ? ' · ' + m.location : '' %></div>
+          <span class="pill <%= m.status %>"><span class="dot <%= m.status %>"></span><%= m.status %></span>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="panel-head">
+    <div>
+      <h2>Recent Job Orders</h2>
+      <div class="subtle">Requests you've raised for the maintenance team</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="/production/job-orders" class="btn btn-ghost btn-sm">View All</a>
+      <a href="/production/job-orders/new" class="btn btn-sm">+ New Job Order</a>
+    </div>
+  </div>
+  <% if (recentJobOrders.length === 0) { %>
+    <div class="empty-state">No job orders yet. Create one when a machine needs attention.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>JO #</th><th>Machine / Equipment</th><th>Priority</th><th>Status</th><th>Raised</th></tr>
+        </thead>
+        <tbody>
+          <% recentJobOrders.forEach(jo => { %>
+            <tr onclick="location.href='/production/job-orders/<%= jo.id %>'" style="cursor:pointer">
+              <td class="jo-number"><%= jo.jo_number %></td>
+              <td><%= jo.machine_name %></td>
+              <td class="priority-<%= jo.priority %>"><%= jo.priority %></td>
+              <td><span class="pill <%= jo.status %>"><%= statusLabels[jo.status] %></span></td>
+              <td class="subtle"><%= new Date(jo.created_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

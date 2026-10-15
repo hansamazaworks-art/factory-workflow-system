@@ -1,0 +1,68 @@
+<%- include('../partials/header', { title: 'Analytics', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Analytics</h1>
+    <div class="subtle">Last 7 days across the floor</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card accent-blue">
+    <div class="kpi-label">7-Day Output</div>
+    <div class="kpi-value"><%= Number(topline.gross).toLocaleString() %></div>
+    <div class="kpi-sub">pcs gross</div>
+  </div>
+  <div class="kpi-card <%= weekAchievementPct === null ? '' : (weekAchievementPct < 90 ? 'accent-amber' : 'accent-green') %>">
+    <div class="kpi-label">7-Day Achievement</div>
+    <div class="kpi-value"><%= weekAchievementPct === null ? '—' : weekAchievementPct.toFixed(0) + '%' %></div>
+    <div class="kpi-sub">vs. target opens</div>
+  </div>
+  <div class="kpi-card <%= weekRejectRatePct > 3 ? 'accent-red' : '' %>">
+    <div class="kpi-label">7-Day Reject Rate</div>
+    <div class="kpi-value"><%= weekRejectRatePct.toFixed(1) %>%</div>
+    <div class="kpi-sub"><%= Number(topline.rejects).toLocaleString() %> rejected pcs</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Output vs. Target</h2></div>
+  <div class="bar-chart">
+    <% days.forEach(d => { %>
+      <div class="bar-col">
+        <div class="bar-value"><%= d.gross.toLocaleString() %></div>
+        <div style="width:100%;max-width:34px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative">
+          <div class="bar" style="height:<%= Math.round((d.gross / maxValue) * 100) %>%;background:<%= d.targetPieces > 0 && d.gross < d.targetPieces * 0.9 ? 'var(--amber)' : 'var(--accent)' %>"></div>
+          <% if (d.targetPieces > 0) { %>
+            <div style="position:absolute;left:-3px;right:-3px;bottom:<%= Math.round((d.targetPieces / maxValue) * 100) %>%;border-top:2px dashed var(--gray)"></div>
+          <% } %>
+        </div>
+        <div class="bar-label"><%= d.label %></div>
+      </div>
+    <% }) %>
+  </div>
+  <div class="subtle" style="margin-top:10px;font-size:11.5px">Solid bar = actual gross output &middot; dashed line = target pieces</div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Downtime by Reason (7 days)</h2></div>
+  <% if (downtimeByReason.length === 0) { %>
+    <div class="empty-state">No downtime logged this week.</div>
+  <% } else { %>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <% downtimeByReason.forEach(r => { %>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+            <span><%= r.reason %></span>
+            <span class="mono muted"><%= Number(r.totalMin).toFixed(0) %> min &middot; <%= r.occurrences %>x</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:<%= Math.round((r.totalMin / maxDowntime) * 100) %>%;background:var(--red)"></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

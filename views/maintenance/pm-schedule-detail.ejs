@@ -1,0 +1,95 @@
+<%- include('../partials/header', { title: 'PM Schedule Detail', user, active: 'pm' }) %>
+
+<div class="content-header">
+  <div>
+    <h1><%= schedule.task_name %></h1>
+    <div class="subtle"><%= schedule.machine_name %> (<%= schedule.machine_code %>) &middot; every <%= schedule.frequency_days %> days</div>
+  </div>
+  <a href="/maintenance/pm" class="btn btn-ghost">&larr; All Schedules</a>
+</div>
+
+<% if (error) { %><div class="error-box"><%= error %></div><% } %>
+
+<div class="kpi-row">
+  <div class="kpi-card <%= schedule.pmStatus === 'overdue' ? 'accent-red' : (schedule.pmStatus === 'due_soon' ? 'accent-amber' : 'accent-green') %>">
+    <div class="kpi-label">Status</div>
+    <div class="kpi-value" style="font-size:18px"><span class="pill <%= schedule.pmStatus %>"><%= schedule.pmStatus.replace('_',' ') %></span></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Next Due</div>
+    <div class="kpi-value" style="font-size:18px"><%= schedule.next_due_date %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Last Done</div>
+    <div class="kpi-value" style="font-size:18px"><%= schedule.last_done_date ? String(schedule.last_done_date).slice(0,10) : '—' %></div>
+  </div>
+</div>
+
+<% if (schedule.description) { %>
+  <div class="card">
+    <div class="panel-head"><h2>Task Notes</h2></div>
+    <div><%= schedule.description %></div>
+  </div>
+<% } %>
+
+<% if (schedule.is_active && can('pm.complete')) { %>
+<div class="card">
+  <div class="panel-head"><h2>Log This Cycle</h2></div>
+  <form method="POST" action="/maintenance/pm/<%= schedule.id %>/complete" class="field-grid" style="align-items:end">
+    <div>
+      <label for="completed_date">Completed On</label>
+      <input type="date" id="completed_date" name="completed_date" value="<%= today %>" max="<%= today %>">
+    </div>
+    <div style="grid-column:span 2">
+      <label for="notes">Notes (optional)</label>
+      <input type="text" id="notes" name="notes" placeholder="Parts used, findings, etc.">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="btn">Mark Done</button>
+      <button type="submit" formaction="/maintenance/pm/<%= schedule.id %>/skip" class="btn btn-ghost">Skip This Cycle</button>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<% if (can('pm.manage')) { %>
+<div class="card">
+  <div class="panel-head"><h2><%= schedule.is_active ? 'Deactivate' : 'Reactivate' %> Schedule</h2></div>
+  <div class="subtle" style="margin-bottom:10px">
+    <% if (schedule.is_active) { %>
+      Pausing stops it from showing as due/overdue anywhere, including the KPI Dashboard, without losing its history.
+    <% } else { %>
+      This schedule is currently paused and won't count toward due/overdue totals.
+    <% } %>
+  </div>
+  <form method="POST" action="/maintenance/pm/<%= schedule.id %>/toggle">
+    <button type="submit" class="btn <%= schedule.is_active ? 'btn-danger' : '' %>"><%= schedule.is_active ? 'Deactivate' : 'Reactivate' %></button>
+  </form>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="panel-head"><h2>History</h2></div>
+  <% if (history.length === 0) { %>
+    <div class="empty-state">No completions logged yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Due</th><th>Completed</th><th>Status</th><th>By</th><th>Notes</th></tr></thead>
+        <tbody>
+          <% history.forEach(h => { %>
+            <tr>
+              <td class="mono"><%= ymd(h.due_date) %></td>
+              <td class="mono"><%= ymd(h.completed_date) %></td>
+              <td><span class="pill <%= h.status === 'done' ? 'completed' : 'pending' %>"><%= h.status %></span></td>
+              <td><%= h.completed_by_name %></td>
+              <td class="subtle"><%= h.notes || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

@@ -1,0 +1,107 @@
+<%- include('../partials/header', { title: jobOrder.jo_number, user }) %>
+
+  <div class="card">
+    <div class="panel-head">
+      <div>
+        <h1 class="jo-number"><%= jobOrder.jo_number %></h1>
+        <div class="subtle"><%= jobOrder.machine_name %><%= jobOrder.location ? ' · ' + jobOrder.location : '' %></div>
+      </div>
+      <span class="pill <%= jobOrder.status %>"><%= statusLabels[jobOrder.status] %></span>
+    </div>
+
+    <label>Priority</label>
+    <p class="priority-<%= jobOrder.priority %>" style="margin:0 0 12px;text-transform:capitalize"><%= jobOrder.priority %></p>
+
+    <label>Problem Description</label>
+    <p style="margin:0 0 12px;white-space:pre-wrap"><%= jobOrder.problem_desc %></p>
+
+    <div class="subtle">Raised by <%= jobOrder.requested_by_name %> on <%= new Date(jobOrder.created_at).toLocaleString() %></div>
+  </div>
+
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <% if (canAccept) { %>
+    <div class="card">
+      <h2 style="margin-bottom:14px">Accept this job order</h2>
+      <form method="POST" action="/maintenance/job-orders/<%= jobOrder.id %>/accept">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" name="notes" placeholder="Any initial notes before you start..."></textarea>
+        <button type="submit" class="btn">Accept Job Order</button>
+      </form>
+    </div>
+  <% } %>
+
+  <% if (action) { %>
+    <div class="card">
+      <h2 style="margin-bottom:6px">Accepted by <%= action.accepted_by_name %></h2>
+      <div class="subtle"><%= new Date(action.accepted_at).toLocaleString() %></div>
+      <% if (action.notes) { %><p style="margin-top:12px"><%= action.notes %></p><% } %>
+    </div>
+  <% } %>
+
+  <% if (materialRequests.length > 0) { %>
+    <div class="card">
+      <h2 style="margin-bottom:14px">Tools / Materials Requested</h2>
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Status</th><th>Requested</th></tr></thead>
+        <tbody>
+          <% materialRequests.forEach(m => { %>
+            <tr>
+              <td><%= m.item_name %></td>
+              <td><%= m.quantity %></td>
+              <td><%= m.unit %></td>
+              <td><span class="pill"><%= m.status.replace('_',' ') %></span></td>
+              <td class="subtle"><%= new Date(m.created_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <% if (canWork) { %>
+    <div class="card">
+      <h2 style="margin-bottom:14px">Request Tools / Materials from Toolroom</h2>
+      <form method="POST" action="/maintenance/job-orders/<%= jobOrder.id %>/materials">
+        <label for="item_name">Item</label>
+        <input type="text" id="item_name" name="item_name" value="<%= form.item_name || '' %>" placeholder="e.g. Hydraulic hose fitting 1/2in" required>
+
+        <label for="quantity">Quantity</label>
+        <input type="number" id="quantity" name="quantity" value="<%= form.quantity || '' %>" min="0.01" step="any" inputmode="decimal" placeholder="e.g. 2" required>
+
+        <label for="unit">Unit</label>
+        <input type="text" id="unit" name="unit" value="<%= form.unit || '' %>" placeholder="e.g. pcs, meters, liters" required>
+
+        <button type="submit" class="btn">Send Request to Toolroom</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:10px">Finished the repair?</h2>
+      <p class="subtle" style="margin-bottom:14px">Mark this job order complete once the machine is fixed and back in service.</p>
+      <form method="POST" action="/maintenance/job-orders/<%= jobOrder.id %>/complete"
+            onsubmit="return confirm('Mark this job order as completed?')">
+        <button type="submit" class="btn">Mark Completed</button>
+      </form>
+    </div>
+  <% } %>
+
+  <div class="card">
+    <h2 style="margin-bottom:14px">Status History</h2>
+    <ul class="timeline">
+      <% history.forEach(h => { %>
+        <li>
+          <strong><%= statusLabels[h.status] || h.status %></strong>
+          <% if (h.remarks) { %> &mdash; <%= h.remarks %><% } %>
+          <div class="t-meta"><%= h.changed_by_name %> &middot; <%= new Date(h.created_at).toLocaleString() %></div>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+
+  <a href="/maintenance/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+
+
+<%- include('../partials/footer') %>

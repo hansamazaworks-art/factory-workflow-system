@@ -1,0 +1,42 @@
+<%- include('../partials/header', { title: 'New Job Order', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>New Job Order</h1>
+    <div class="subtle">This goes straight to the Maintenance team's queue</div>
+  </div>
+  <a href="/production/job-orders" class="btn btn-ghost">Cancel</a>
+</div>
+
+<div class="card" style="max-width:560px">
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="/production/job-orders">
+    <label for="machine_name">Machine / Equipment</label>
+    <input type="text" id="machine_name" name="machine_name" placeholder="e.g. Injection Molder #3"
+           value="<%= form.machine_name || '' %>">
+
+    <label for="location">Location (optional)</label>
+    <input type="text" id="location" name="location" placeholder="e.g. Building B, Line 2"
+           value="<%= form.location || '' %>">
+
+    <label for="priority">Priority</label>
+    <select id="priority" name="priority">
+      <option value="low"    <%= form.priority === 'low' ? 'selected' : '' %>>Low</option>
+      <option value="normal" <%= (!form.priority || form.priority === 'normal') ? 'selected' : '' %>>Normal</option>
+      <option value="high"   <%= form.priority === 'high' ? 'selected' : '' %>>High</option>
+      <option value="urgent" <%= form.priority === 'urgent' ? 'selected' : '' %>>Urgent - line is down</option>
+    </select>
+
+    <label for="problem_desc">What's wrong?</label>
+    <textarea id="problem_desc" name="problem_desc" placeholder="Describe the problem in enough detail for maintenance to act on it."><%= form.problem_desc || '' %></textarea>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">Submit Job Order</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer', { user }) %>

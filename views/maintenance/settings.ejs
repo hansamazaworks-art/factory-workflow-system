@@ -1,0 +1,71 @@
+<%- include('../partials/header', { title: 'Maintenance Settings', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Maintenance Settings</h1>
+    <div class="subtle">Rules the Maintenance pages use. Every change is recorded below with who made it and why.</div>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px">
+  <div class="panel-head">
+    <div>
+      <h2>Response targets</h2>
+      <div class="subtle">An open job order counts as overdue on the KPI Dashboard once it has been open longer than the target for its priority.</div>
+    </div>
+  </div>
+
+  <% if (Object.keys(errors).length) { %>
+    <div class="error-box" role="alert">Nothing was saved. Correct the highlighted fields and save again.</div>
+  <% } %>
+
+  <form method="POST" action="/maintenance/settings" novalidate>
+    <fieldset class="plain-fieldset" <%= canManage ? '' : 'disabled' %>>
+      <legend class="sr-only">Hours before a job order is overdue, by priority</legend>
+      <div class="field-grid">
+        <% priorities.forEach(p => { const id = 'overdue_hours_' + p; %>
+          <div>
+            <label for="<%= id %>"><span class="priority-<%= p %>" style="text-transform:capitalize"><%= p %></span> priority (hours)</label>
+            <input type="number" id="<%= id %>" name="<%= id %>" value="<%= values[p] %>" min="1" max="8760" step="1" inputmode="numeric"
+                   <%- errors[p] ? `aria-invalid="true" aria-describedby="${id}-error"` : '' %>>
+            <% if (errors[p]) { %><div class="field-error" id="<%= id %>-error"><%= errors[p] %></div><% } %>
+          </div>
+        <% }) %>
+      </div>
+      <% if (canManage) { %>
+        <label for="reason">Reason for the change (optional, kept in the history)</label>
+        <input type="text" id="reason" name="reason" value="<%= reason %>" maxlength="500" placeholder="e.g. Agreed with the Plant Manager on 10 Oct">
+        <div class="form-actions"><button type="submit" class="btn">Save targets</button></div>
+      <% } else { %>
+        <p class="stat-note">Only the Maintenance Manager can change these.</p>
+      <% } %>
+    </fieldset>
+  </form>
+</div>
+
+<div class="card" style="max-width:760px">
+  <div class="panel-head"><h2>Change history</h2></div>
+  <% if (history.length === 0) { %>
+    <div class="empty-state">No changes yet. The targets are still the original 4 / 24 / 72 / 168 hours.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Setting</th><th class="num">From</th><th class="num">To</th><th>By</th><th>Reason</th></tr></thead>
+        <tbody>
+          <% history.forEach(h => { %>
+            <tr>
+              <td class="subtle nowrap"><%= new Date(h.created_at).toLocaleString() %></td>
+              <td class="nowrap" style="text-transform:capitalize"><%= h.entity_id.replace('overdue_hours_', '') %> target</td>
+              <td class="num mono"><%= h.old_value %>h</td>
+              <td class="num mono"><%= h.new_value %>h</td>
+              <td><%= h.user_name || 'Command line' %></td>
+              <td class="subtle"><%= h.reason || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,64 @@
+<%- include('../partials/header', { title: po.po_number, user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1 class="jo-number"><%= po.po_number %></h1>
+        <div class="subtle">For <span class="jo-number"><%= po.jo_number %></span> &middot; <%= po.machine_name %></div>
+      </div>
+      <span class="pill <%= po.status === 'approved' ? 'completed' : (po.status === 'rejected' ? 'cancelled' : 'pending') %>">
+        <%= po.status.replace('_',' ') %>
+      </span>
+    </div>
+
+    <label>Item</label>
+    <p style="margin:0 0 12px"><%= po.item_name %> &middot; <%= po.quantity %> <%= po.unit %></p>
+
+    <label>Original Problem</label>
+    <p style="margin:0 0 12px;white-space:pre-wrap"><%= po.problem_desc %></p>
+
+    <label>Supplier</label>
+    <p style="margin:0 0 12px"><%= po.supplier %></p>
+
+    <label>Unit Price</label>
+    <p style="margin:0 0 12px"><%= parseFloat(po.unit_price).toFixed(2) %></p>
+
+    <label>Total Amount</label>
+    <p style="margin:0 0 12px"><strong><%= parseFloat(po.total_amount).toFixed(2) %></strong></p>
+
+    <div class="subtle">Created by <%= po.created_by_name %> on <%= new Date(po.created_at).toLocaleString() %></div>
+  </div>
+
+  <% if (error) { %>
+    <div class="error-box"><%= error %></div>
+  <% } %>
+
+  <% if (approval) { %>
+    <div class="panel">
+      <h2 style="margin-bottom:6px">Your Decision</h2>
+      <p style="margin:0 0 6px">
+        <span class="pill <%= approval.decision === 'approved' ? 'completed' : 'cancelled' %>"><%= approval.decision %></span>
+      </p>
+      <% if (approval.remarks) { %><p style="margin:8px 0"><%= approval.remarks %></p><% } %>
+      <div class="subtle">By <%= approval.decided_by_name %> on <%= new Date(approval.decided_at).toLocaleString() %></div>
+    </div>
+  <% } else { %>
+    <div class="panel">
+      <h2 style="margin-bottom:14px">Decision</h2>
+      <form method="POST" action="/management/purchase-orders/<%= po.id %>/decide">
+        <label for="remarks">Remarks (optional)</label>
+        <textarea id="remarks" name="remarks" placeholder="Any comments on this decision..."></textarea>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+          <button type="submit" name="decision" value="approved" class="btn">Approve</button>
+          <button type="submit" name="decision" value="rejected" class="btn btn-ghost">Reject</button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+
+  <a href="/management/dashboard" class="btn btn-ghost">&larr; Back to dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

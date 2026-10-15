@@ -1,0 +1,83 @@
+<%- include('../partials/header', { title: 'Toolroom Dashboard', user }) %>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Material Requests</h1>
+        <div class="subtle">Waiting to be checked against stock</div>
+      </div>
+      <a href="/toolroom/inventory" class="btn btn-ghost">Manage Inventory</a>
+    </div>
+
+    <% if (pending.length === 0) { %>
+      <div class="empty-state">Nothing waiting right now.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>JO #</th><th>Machine</th><th>Item</th><th>Qty</th><th>Priority</th><th></th></tr></thead>
+        <tbody>
+          <% pending.forEach(r => { %>
+            <tr>
+              <td class="jo-number"><%= r.jo_number %></td>
+              <td><%= r.machine_name %></td>
+              <td><%= r.item_name %></td>
+              <td><%= r.quantity %> <%= r.unit %></td>
+              <td class="priority-<%= r.priority %>"><%= r.priority %></td>
+              <td><a href="/toolroom/requests/<%= r.id %>" class="btn">Check</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Purchase Orders Awaiting Receipt</h1>
+        <div class="subtle">Ordered from a supplier - mark received when they arrive</div>
+      </div>
+    </div>
+    <% if (awaitingReceipt.length === 0) { %>
+      <div class="empty-state">Nothing on order right now.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>PO #</th><th>JO #</th><th>Item</th><th>Qty</th><th></th></tr></thead>
+        <tbody>
+          <% awaitingReceipt.forEach(po => { %>
+            <tr>
+              <td class="jo-number"><%= po.po_number %></td>
+              <td class="jo-number"><%= po.jo_number %></td>
+              <td><%= po.item_name %></td>
+              <td><%= po.quantity %> <%= po.unit %></td>
+              <td><a href="/toolroom/purchase-orders/<%= po.id %>" class="btn">Review</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:14px">Recently Handled</h2>
+    <% if (handled.length === 0) { %>
+      <div class="empty-state">Nothing handled yet.</div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>JO #</th><th>Item</th><th>Qty</th><th>Result</th></tr></thead>
+        <tbody>
+          <% handled.forEach(r => { %>
+            <tr>
+              <td class="jo-number"><%= r.jo_number %></td>
+              <td><%= r.item_name %></td>
+              <td><%= r.quantity %> <%= r.unit %></td>
+              <td><span class="pill <%= r.status === 'issued' ? 'completed' : 'cancelled' %>"><%= r.status.replace('_',' ') %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

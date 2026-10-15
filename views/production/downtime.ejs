@@ -1,0 +1,82 @@
+<%- include('../partials/header', { title: 'Downtime', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Downtime</h1>
+    <div class="subtle">Log stoppages so production targets account for them</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Log Downtime</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <form method="POST" action="/production/downtime">
+    <div class="field-grid">
+      <div>
+        <label for="machine_id">Machine</label>
+        <select id="machine_id" name="machine_id" required>
+          <option value="">Select machine…</option>
+          <% machines.forEach(m => { %>
+            <option value="<%= m.id %>"><%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="log_date">Date</label>
+        <input type="date" id="log_date" name="log_date" value="<%= form.log_date %>">
+      </div>
+      <div>
+        <label for="shift_id">Shift (optional)</label>
+        <select id="shift_id" name="shift_id">
+          <option value="">Any / unspecified</option>
+          <% shifts.forEach(s => { %>
+            <option value="<%= s.id %>"><%= s.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="start_time">Start time</label>
+        <input type="time" id="start_time" name="start_time">
+      </div>
+      <div>
+        <label for="end_time">End time</label>
+        <input type="time" id="end_time" name="end_time">
+      </div>
+      <div>
+        <label for="reason">Reason</label>
+        <input type="text" id="reason" name="reason" placeholder="e.g. Mold change, Power outage, Breakdown">
+      </div>
+    </div>
+    <label for="remarks">Remarks</label>
+    <input type="text" id="remarks" name="remarks" placeholder="Optional">
+    <div class="form-actions">
+      <button type="submit" class="btn">Log Downtime</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Recent Downtime</h2></div>
+  <% if (logs.length === 0) { %>
+    <div class="empty-state">No downtime logged yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Machine</th><th>Time</th><th>Reason</th><th>Logged By</th></tr></thead>
+        <tbody>
+          <% logs.forEach(l => { %>
+            <tr>
+              <td class="subtle"><%= new Date(l.log_date).toLocaleDateString() %></td>
+              <td><%= l.machine_name %></td>
+              <td class="mono"><%= l.start_time.slice(0,5) %>–<%= l.end_time.slice(0,5) %></td>
+              <td><%= l.reason %></td>
+              <td class="subtle"><%= l.logged_by_name %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>

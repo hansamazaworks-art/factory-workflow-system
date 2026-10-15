@@ -1,0 +1,270 @@
+<%
+  function toClock(dt) {
+    const d = new Date(dt);
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+%>
+<%- include('../partials/header', { title: 'Live Floor', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Live Floor</h1>
+    <div class="subtle">Start a machine's operation, track it live, log downtime, finish the shift</div>
+  </div>
+</div>
+
+<% if (error) { %>
+  <div class="error-box"><%= error %></div>
+<% } %>
+
+<div class="live-grid">
+  <% machines.forEach(m => { %>
+    <% const run = m.run; %>
+    <div class="card live-card <%= run ? run.status : m.status %>">
+      <div class="live-card-head">
+        <div>
+          <div class="m-name"><%= m.name %></div>
+          <div class="m-meta"><%= m.code %><%= m.location ? ' · ' + m.location : '' %></div>
+        </div>
+        <span class="pill <%= run ? run.status : m.status %>">
+          <span class="dot <%= run ? run.status : m.status %>"></span><%= run ? run.status : m.status %>
+        </span>
+      </div>
+
+      <% if (!run) { %>
+        <%# ---------- IDLE: no live run - show what's mounted, offer Start Run ---------- %>
+        <div class="live-info">
+          <% if (m.assignment) { %>
+            Mounted: <strong><%= m.assignment.mold_name %></strong> (<%= m.assignment.product %>)
+            &middot; <%= m.assignment.cavities_snapshot %> cav
+          <% } else { %>
+            <span class="muted">No mold mounted yet — pick one below to start.</span>
+          <% } %>
+        </div>
+
+        <button type="button" class="btn btn-sm" onclick="toggle('start-<%= m.id %>')">&#9654; Start Run</button>
+
+        <div id="start-<%= m.id %>" class="live-panel" style="display:none">
+          <form method="POST" action="/production/floor/<%= m.id %>/start">
+            <div class="field-grid">
+              <div>
+                <label for="mold-<%= m.id %>">Mold</label>
+                <select id="mold-<%= m.id %>" name="mold_id" onchange="onMoldChange(<%= m.id %>)">
+                  <option value="">Select mold…</option>
+                  <% molds.forEach(mo => { %>
+                    <option value="<%= mo.id %>" data-cycle="<%= mo.standard_cycle_sec || '' %>"
+                      <%= (m.assignment && m.assignment.mold_id === mo.id) ? 'selected' : '' %>>
+                      <%= mo.name %><%= mo.product ? ' — ' + mo.product : '' %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+              <div>
+                <label for="operator-<%= m.id %>">Operator</label>
+                <select id="operator-<%= m.id %>" name="operator_id">
+                  <option value="">Select operator…</option>
+                  <% operators.forEach(o => { %>
+                    <option value="<%= o.id %>"><%= o.name %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div>
+                <label for="shift-<%= m.id %>">Shift</label>
+                <select id="shift-<%= m.id %>" name="shift_id">
+                  <% shifts.forEach(s => { %>
+                    <option value="<%= s.id %>" <%= defaultShiftId === s.id ? 'selected' : '' %>>
+                      <%= s.name %> (<%= s.start_time.slice(0,5) %>–<%= s.end_time.slice(0,5) %>)
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+              <div>
+                <label for="cycle-<%= m.id %>">Cycle time (sec/open)</label>
+                <input type="number" min="0" step="0.1" id="cycle-<%= m.id %>" name="cycle_time_sec"
+                  value="<%= m.assignment ? (m.assignment.standard_cycle_sec || '') : '' %>" placeholder="e.g. 19.2">
+              </div>
+            </div>
+            <div class="form-actions" style="display:flex;gap:8px">
+              <button type="submit" class="btn btn-sm">Start</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggle('start-<%= m.id %>')">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+      <% } else { %>
+        <%# ---------- RUNNING or DOWN: live info + controls ---------- %>
+        <div class="live-info">
+          <strong><%= run.mold_name %></strong> (<%= run.mold_product %>) &middot; <%= run.operator_name %>
+          <br><span class="muted"><%= run.shift_name %> &middot; started <%= toClock(run.started_at) %>
+          &middot; running <span class="mono" data-started="<%= new Date(run.started_at).toISOString() %>">—</span></span>
+          <% if (run.cycle_time_sec) { %>
+            <br><span class="muted">Cycle time: <%= Number(run.cycle_time_sec).toFixed(1) %>s/open</span>
+          <% } %>
+        </div>
+
+        <% if (run.status === 'down') { %>
+          <div class="notice-box warn">
+            Down since <%= toClock(run.openDowntime.started_at) %>
+            (<span class="mono" data-started="<%= new Date(run.openDowntime.started_at).toISOString() %>">—</span>)
+            &middot; <%= run.openDowntime.reason %>
+          </div>
+          <div class="live-actions">
+            <form method="POST" action="/production/floor/<%= m.id %>/downtime/end" style="display:inline">
+              <button type="submit" class="btn btn-sm" style="background:var(--green);border-color:var(--green)">&#9654; Resume</button>
+            </form>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="toggle('finish-<%= m.id %>')">Finish Shift</button>
+          </div>
+        <% } else { %>
+          <div class="live-actions">
+            <button type="button" class="btn btn-danger btn-sm" onclick="toggle('downtime-<%= m.id %>')">&#9208; Log Downtime</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="toggle('finish-<%= m.id %>')">Finish Shift</button>
+          </div>
+        <% } %>
+
+        <div id="downtime-<%= m.id %>" class="live-panel" style="display:none">
+          <form method="POST" action="/production/floor/<%= m.id %>/downtime/start">
+            <label for="reason-<%= m.id %>">Reason</label>
+            <select id="reason-<%= m.id %>" name="reason">
+              <% downtimeReasons.forEach(r => { %>
+                <option value="<%= r %>"><%= r %></option>
+              <% }) %>
+            </select>
+            <label for="dtremarks-<%= m.id %>">Remarks</label>
+            <input type="text" id="dtremarks-<%= m.id %>" name="remarks" placeholder="Optional">
+            <div class="form-actions" style="display:flex;gap:8px">
+              <button type="submit" class="btn btn-danger btn-sm">Confirm Downtime</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggle('downtime-<%= m.id %>')">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="finish-<%= m.id %>" class="live-panel" style="display:none">
+          <form method="POST" action="/production/floor/<%= m.id %>/finish">
+            <div class="field-grid">
+              <div>
+                <label for="opensMethod-<%= m.id %>">Opens reporting method</label>
+                <select id="opensMethod-<%= m.id %>" name="opens_method" onchange="onOpensMethod(<%= m.id %>)">
+                  <option value="direct">Direct opens</option>
+                  <option value="counter">Previous / current counter</option>
+                </select>
+              </div>
+              <div>
+                <label for="endtime-<%= m.id %>">End time (optional)</label>
+                <input type="time" id="endtime-<%= m.id %>" name="end_time" placeholder="Defaults to now">
+              </div>
+              <div>
+                <label for="finishcycle-<%= m.id %>">Cycle time (sec/open)</label>
+                <input type="number" min="0" step="0.1" id="finishcycle-<%= m.id %>" name="cycle_time_sec"
+                  value="<%= run.cycle_time_sec || '' %>">
+              </div>
+              <div>
+                <label for="rejects-<%= m.id %>">Reject quantity</label>
+                <input type="number" min="0" id="rejects-<%= m.id %>" name="reject_qty" value="0">
+              </div>
+            </div>
+            <div class="field-grid" style="margin-top:14px">
+              <div id="directOpens-<%= m.id %>">
+                <label for="opens-<%= m.id %>">Machine opens</label>
+                <input type="number" min="0" id="opens-<%= m.id %>" name="machine_opens" placeholder="e.g. 1250">
+              </div>
+              <div id="counterOpens-<%= m.id %>" style="display:none">
+                <div class="field-grid">
+                  <div>
+                    <label for="prev-<%= m.id %>">Previous counter</label>
+                    <input type="number" min="0" id="prev-<%= m.id %>" name="prev_counter">
+                  </div>
+                  <div>
+                    <label for="curr-<%= m.id %>">Current counter</label>
+                    <input type="number" min="0" id="curr-<%= m.id %>" name="curr_counter">
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label for="finishremarks-<%= m.id %>">Remarks</label>
+                <input type="text" id="finishremarks-<%= m.id %>" name="remarks" placeholder="Optional">
+              </div>
+            </div>
+            <div class="form-actions" style="display:flex;gap:8px">
+              <button type="submit" class="btn btn-sm">&#9632; Finish Shift</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggle('finish-<%= m.id %>')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Finished Today</h2></div>
+  <% if (todaysEntries.length === 0) { %>
+    <div class="empty-state">No shifts finished yet today.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Machine</th><th>Mold</th><th>Operator</th><th>Cycle</th><th>Opens</th><th>Gross</th><th>Good</th><th>Reject%</th><th>Achv.</th></tr>
+        </thead>
+        <tbody>
+          <% todaysEntries.forEach(r => {
+            const gross = r.machine_opens * r.cavities_snapshot;
+            const good = gross - r.reject_qty;
+            const rejectPct = gross > 0 ? (r.reject_qty / gross) * 100 : 0;
+            const targetPieces = (r.target_opens || 0) * r.cavities_snapshot;
+            const achv = targetPieces > 0 ? (gross / targetPieces) * 100 : null;
+          %>
+            <tr>
+              <td class="mono"><%= r.start_time.slice(0,5) %>–<%= r.end_time.slice(0,5) %></td>
+              <td><%= r.machine_name %></td>
+              <td><%= r.mold_name %></td>
+              <td><%= r.operator_name %></td>
+              <td class="mono"><%= r.cycle_time_sec ? Number(r.cycle_time_sec).toFixed(1) + 's' : '—' %></td>
+              <td class="mono"><%= r.machine_opens %></td>
+              <td class="mono"><%= gross %></td>
+              <td class="mono"><%= good %></td>
+              <td class="mono"><%= rejectPct.toFixed(1) %>%</td>
+              <td class="mono <%= achv !== null && achv < 90 ? 'priority-high' : '' %>"><%= achv === null ? '—' : achv.toFixed(0) + '%' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  function toggle(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+  function onMoldChange(machineId) {
+    const sel = document.getElementById('mold-' + machineId);
+    const opt = sel.options[sel.selectedIndex];
+    const cycleInput = document.getElementById('cycle-' + machineId);
+    const cycle = opt ? opt.getAttribute('data-cycle') : '';
+    if (cycle) cycleInput.value = cycle;
+  }
+  function onOpensMethod(machineId) {
+    const method = document.getElementById('opensMethod-' + machineId).value;
+    document.getElementById('directOpens-' + machineId).style.display = method === 'direct' ? '' : 'none';
+    document.getElementById('counterOpens-' + machineId).style.display = method === 'counter' ? '' : 'none';
+  }
+  function fmtElapsed(ms) {
+    if (ms < 0) ms = 0;
+    const totalMin = Math.floor(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const mnt = totalMin % 60;
+    return (h > 0 ? h + 'h ' : '') + mnt + 'm';
+  }
+  function tickTimers() {
+    document.querySelectorAll('[data-started]').forEach(el => {
+      const started = new Date(el.getAttribute('data-started'));
+      el.textContent = fmtElapsed(Date.now() - started.getTime());
+    });
+  }
+  tickTimers();
+  setInterval(tickTimers, 30000);
+</script>
+
+<%- include('../partials/footer', { user }) %>

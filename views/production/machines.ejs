@@ -1,0 +1,66 @@
+<%- include('../partials/header', { title: 'Machines', user, active }) %>
+
+<div class="content-header">
+  <div>
+    <h1>Machines</h1>
+    <div class="subtle">Floor equipment and their current status</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>Add Machine</h2></div>
+  <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+  <form method="POST" action="/production/machines" class="field-grid" style="align-items:end">
+    <div>
+      <label for="code">Code</label>
+      <input type="text" id="code" name="code" placeholder="e.g. IM-04" required>
+    </div>
+    <div>
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" placeholder="e.g. Injection Molder #4" required>
+    </div>
+    <div>
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" placeholder="e.g. Building B, Line 2">
+    </div>
+    <div>
+      <button type="submit" class="btn">+ Add Machine</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="panel-head"><h2>All Machines</h2></div>
+  <% if (machines.length === 0) { %>
+    <div class="empty-state">No machines yet.</div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Name</th><th>Location</th><th>Mold Mounted</th><th>Status</th><th>Set Status</th></tr></thead>
+        <tbody>
+          <% machines.forEach(m => { %>
+            <tr>
+              <td class="jo-number"><%= m.code %></td>
+              <td><%= m.name %></td>
+              <td class="subtle"><%= m.location || '—' %></td>
+              <td><%= m.assignment ? m.assignment.mold_name : '—' %></td>
+              <td><span class="pill <%= m.status %>"><span class="dot <%= m.status %>"></span><%= m.status %></span></td>
+              <td>
+                <form method="POST" action="/production/machines/<%= m.id %>/status" style="display:flex;gap:6px">
+                  <select name="status" onchange="this.form.submit()" style="width:auto">
+                    <option value="running" <%= m.status==='running'?'selected':'' %>>Running</option>
+                    <option value="idle" <%= m.status==='idle'?'selected':'' %>>Idle</option>
+                    <option value="down" <%= m.status==='down'?'selected':'' %>>Down</option>
+                    <option value="maintenance" <%= m.status==='maintenance'?'selected':'' %>>Maintenance</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer', { user }) %>
